@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import axios from 'axios';
 import styled from 'styled-components';
 import {addUrlPrefix} from '../helper/addUrlPrefix';
@@ -63,18 +63,22 @@ const RatingContainer = styled.div`
   color: gray;
 `;
 
-function ListingSection() {
+const ListingSection = ({text}) => {
 
   const [appDatas, setAppDatas] = useState([]);
   const [appIds, setAppIds] = useState([]);
   const [appDetails, setAppDetails] = useState([]);
+  const [currentAppItemNumber, setCurrentAppItemNumber] = useState(10);
+  const divRef = useRef(document.createElement('div'));
 
   useEffect(()=> {
-    axios.get(addUrlPrefix('https://rss.itunes.apple.com/api/v1/hk/ios-apps/top-free/all/10/explicit.json'))
+    axios.get(addUrlPrefix(`https://rss.itunes.apple.com/api/v1/hk/ios-apps/top-free/all/${currentAppItemNumber}/explicit.json`))
     .then(function (response) {
       // handle success
-      setAppDatas(response.data.feed.results)
-      setAppIds(response.data.feed.results.map(app => app.id))
+      const results = response.data.feed.results;
+      const newAppIds = results.map(app => app.id);
+      setAppDatas(results);
+      setAppIds(newAppIds);
     })
     .catch(function (error) {
       // handle error
@@ -83,14 +87,14 @@ function ListingSection() {
     .then(function () {
       // always executed
     });
-  },[]);
+  },[currentAppItemNumber]);
 
   useEffect(()=> {
     axios.get(addUrlPrefix(`https://itunes.apple.com/hk/lookup?id=${appIds}`))
     .then(function (response) {
       // handle success
-      console.log('response', response);
-      setAppDetails(response.data.results)
+      const results = response.data.results;
+      setAppDetails(results);
     })
     .catch(function (error) {
       // handle error
@@ -101,19 +105,36 @@ function ListingSection() {
     });
   },[appIds]);
 
-  if(appDetails.length === 0 || appDatas.length === 0){
-    return null;
-  }
+  const listenToScroll = useCallback(
+    () => {
+      if(window.innerHeight + window.pageYOffset === divRef?.current?.offsetTop){
+        setCurrentAppItemNumber(prev => {
+          if(prev < 100){
+            return prev + 10;
+          }
+          return 100;
+        });
+      }
+    }
+  );
 
-  console.log('appDatas', appDatas);
-  console.log('appDetails', appDetails);
+  useEffect(()=>{
+    if(window !== undefined ){
+      window.addEventListener("scroll", listenToScroll);
+    }
+
+    return () => {
+      window.removeEventListener('scroll', listenToScroll);
+    };
+
+  }, [window]);
 
   return (
     <div>
       {appDatas.map((appData, index) => {
         const {artworkUrl100, name, genres, url, artistId} = appData;
         return(
-          <AppContainer href={url}>
+          <AppContainer href={url} key={name}>
             <AppIndex>
             {index + 1}
             </AppIndex>
@@ -124,13 +145,15 @@ function ListingSection() {
                 {genres[0].name}
               </Text>
               <RatingContainer>
-                {[...Array(5)].map((e, i) => <StarIcon size="15" color={Math.round(appDetails[index].averageUserRating) > i + 1 ? "orange" : "palegoldenrod"} />)}
-                {`(${appDetails[index].userRatingCount})`}
+                {[...Array(5)].map((e, i) => <StarIcon size="15" color={Math.round(appDetails[index]?.averageUserRating) > i + 1 ? "orange" : "palegoldenrod"} />)}
+                {`(${appDetails[index]?.userRatingCount})`}
               </RatingContainer>
             </TextContainer>
           </AppContainer>
         )
         })}
+        <h1>Fetching Data, Please wait .....</h1>
+        <div ref={divRef}/>
     </div>
   );
 }

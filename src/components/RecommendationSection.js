@@ -53,7 +53,7 @@ const Text = styled.div`
   height: 34px;
 `;
 
-function RecommendationSection() {
+const RecommendationSection = ({text}) => {
 
   const [appDatas, setAppDatas] = useState([]);
 
@@ -76,18 +76,22 @@ function RecommendationSection() {
     return null;
   }
 
+  const filteredAppDatas = appDatas.filter(
+    appData => appData.name.match(text) || appData.genres[0].name.match(text)
+  );
+
   return (
     <Container>
       <StyledH1>推介</StyledH1>
       <Wrapper>
-      {appDatas.map((appData) => {
+      {filteredAppDatas.map((appData) => {
         const {artworkUrl100, name, genres, url} = appData;
         return(
           <AppContainer href={url}>
             <Icon imageLink={artworkUrl100} />
             <Text textColor="black">{name}</Text>
             <Text textColor="gray">
-              {genres[0].name}
+              {genres[0]?.name}
             </Text>
           </AppContainer>
         )
