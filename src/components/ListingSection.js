@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import styled from 'styled-components';
 import {addUrlPrefix} from '../helper/addUrlPrefix';
+import StarIcon from './StarIcon';
 
 const AppContainer = styled.a`
   padding: 20px;
@@ -43,23 +44,37 @@ const Text = styled.div`
   padding-top: 5px;
   color: ${props => props.textColor};
   font-size: 16px;
-  width: 100px;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   white-space: pre-line;
+  padding: ${props => props.isMiddle ? "23px 0" : "0" };
+  vertical-align: top;
+  @media (max-width: 640px) {
+    width: 200px;
+  }
+  @media (max-width: 420px) {
+    width: 100px;
+  }
+`;
+
+const RatingContainer = styled.div`
+  color: gray;
 `;
 
 function ListingSection() {
 
   const [appDatas, setAppDatas] = useState([]);
+  const [appIds, setAppIds] = useState([]);
+  const [appDetails, setAppDetails] = useState([]);
 
   useEffect(()=> {
     axios.get(addUrlPrefix('https://rss.itunes.apple.com/api/v1/hk/ios-apps/top-free/all/10/explicit.json'))
     .then(function (response) {
       // handle success
       setAppDatas(response.data.feed.results)
+      setAppIds(response.data.feed.results.map(app => app.id))
     })
     .catch(function (error) {
       // handle error
@@ -70,14 +85,33 @@ function ListingSection() {
     });
   },[]);
 
-  if(Array.isArray(appDatas) && appDatas.length === 0){
+  useEffect(()=> {
+    axios.get(addUrlPrefix(`https://itunes.apple.com/hk/lookup?id=${appIds}`))
+    .then(function (response) {
+      // handle success
+      console.log('response', response);
+      setAppDetails(response.data.results)
+    })
+    .catch(function (error) {
+      // handle error
+      console.log(error);
+    })
+    .then(function () {
+      // always executed
+    });
+  },[appIds]);
+
+  if(appDetails.length === 0 || appDatas.length === 0){
     return null;
   }
+
+  console.log('appDatas', appDatas);
+  console.log('appDetails', appDetails);
 
   return (
     <div>
       {appDatas.map((appData, index) => {
-        const {artworkUrl100, name, genres, url} = appData;
+        const {artworkUrl100, name, genres, url, artistId} = appData;
         return(
           <AppContainer href={url}>
             <AppIndex>
@@ -86,9 +120,13 @@ function ListingSection() {
             <Icon imageLink={artworkUrl100} evenIndex={index%2} />
             <TextContainer>
               <Text textColor="black">{name}</Text>
-              <Text textColor="gray">
+              <Text textColor="gray" isMiddle={true}>
                 {genres[0].name}
               </Text>
+              <RatingContainer>
+                {[...Array(5)].map((e, i) => <StarIcon size="15" color={Math.round(appDetails[index].averageUserRating) > i + 1 ? "orange" : "palegoldenrod"} />)}
+                {`(${appDetails[index].userRatingCount})`}
+              </RatingContainer>
             </TextContainer>
           </AppContainer>
         )
