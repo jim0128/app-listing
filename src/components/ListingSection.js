@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import styled from 'styled-components';
 import {addUrlPrefix} from '../helper/addUrlPrefix';
@@ -105,18 +105,16 @@ const ListingSection = ({text}) => {
     });
   },[appIds]);
 
-  const listenToScroll = useCallback(
-    () => {
-      if(window.innerHeight + window.pageYOffset === divRef?.current?.offsetTop){
-        setCurrentAppItemNumber(prev => {
-          if(prev < 100){
-            return prev + 10;
-          }
-          return 100;
-        });
-      }
+  const listenToScroll = () => {
+    if(window.innerHeight + window.pageYOffset === divRef?.current?.offsetTop){
+      setCurrentAppItemNumber(prev => {
+        if(prev < 100){
+          return prev + 10;
+        }
+        return 100;
+      });
     }
-  );
+  };
 
   useEffect(()=>{
     if(window !== undefined ){
@@ -127,12 +125,19 @@ const ListingSection = ({text}) => {
       window.removeEventListener('scroll', listenToScroll);
     };
 
-  }, [window]);
+  }, []);
+
+  const filteredAppDatas = appDatas.filter(
+    appData => appData.name.match(text) || appData.genres[0].name.match(text)
+  );
 
   return (
     <div>
-      {appDatas.map((appData, index) => {
+      {filteredAppDatas.map((appData, index) => {
         const {artworkUrl100, name, genres, url, artistId} = appData;
+        const appDetail = appDetails.find(
+          appDetail => appDetail.artistId === parseInt(artistId)
+        );
         return(
           <AppContainer href={url} key={name}>
             <AppIndex>
@@ -145,8 +150,8 @@ const ListingSection = ({text}) => {
                 {genres[0].name}
               </Text>
               <RatingContainer>
-                {[...Array(5)].map((e, i) => <StarIcon size="15" color={Math.round(appDetails[index]?.averageUserRating) > i + 1 ? "orange" : "palegoldenrod"} />)}
-                {`(${appDetails[index]?.userRatingCount})`}
+                {[...Array(5)].map((e, i) => <StarIcon size="15" color={Math.round(appDetail?.averageUserRating) > i + 1 ? "orange" : "palegoldenrod"} />)}
+                {`(${appDetail?.userRatingCount})`}
               </RatingContainer>
             </TextContainer>
           </AppContainer>

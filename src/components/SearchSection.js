@@ -1,7 +1,4 @@
-import axios from 'axios';
 import styled from 'styled-components';
-import {addUrlPrefix} from '../helper/addUrlPrefix';
-import StarIcon from './StarIcon';
 
 const Container = styled.div`
   padding: 20px;
