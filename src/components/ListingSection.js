@@ -157,8 +157,12 @@ const ListingSection = ({text}) => {
           </AppContainer>
         )
         })}
-        <h1>Fetching Data, Please wait .....</h1>
-        <div ref={divRef}/>
+        {!text && (
+          <>
+            <h1>Fetching Data, Please wait .....</h1>
+            <div ref={divRef}/>
+          </>
+        )}
     </div>
   );
 }
