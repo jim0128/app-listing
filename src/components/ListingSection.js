@@ -1,8 +1,9 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import axios from 'axios';
 import styled from 'styled-components';
 import {addUrlPrefix} from '../helper/addUrlPrefix';
 import StarIcon from './StarIcon';
+import loadingImage from './loading.png';
 
 const AppContainer = styled.a`
   padding: 20px;
@@ -143,7 +144,9 @@ const ListingSection = ({text}) => {
             <AppIndex>
             {index + 1}
             </AppIndex>
-            <Icon imageLink={artworkUrl100} evenIndex={index%2} />
+            <Suspense fallback={<Icon imageLink={loadingImage} evenIndex={index%2} />} >
+              <Icon imageLink={artworkUrl100} evenIndex={index%2} />
+            </Suspense>
             <TextContainer>
               <Text textColor="black">{name}</Text>
               <Text textColor="gray" isMiddle={true}>

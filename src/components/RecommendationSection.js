@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import axios from 'axios';
 import styled from 'styled-components';
 import {addUrlPrefix} from '../helper/addUrlPrefix';
+import loadingImage from './loading.png';
 
 const Container = styled.div`
   overflow: hidden;
@@ -88,7 +89,9 @@ const RecommendationSection = ({text}) => {
         const {artworkUrl100, name, genres, url} = appData;
         return(
           <AppContainer href={url}>
-            <Icon imageLink={artworkUrl100} />
+            <Suspense fallback={<Icon imageLink={loadingImage} />}>
+              <Icon imageLink={artworkUrl100} />
+            </Suspense>
             <Text textColor="black">{name}</Text>
             <Text textColor="gray">
               {genres[0]?.name}
